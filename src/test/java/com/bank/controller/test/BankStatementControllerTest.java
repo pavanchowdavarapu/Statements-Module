@@ -164,6 +164,96 @@ public class BankStatementControllerTest extends AbstractTest {
 				.andExpect(MockMvcResultMatchers.status().isOk()).andReturn();
 	}
 
+	@Test
+	public void InvalidUserDetails() throws Exception {
+
+		JwtRequest jwtRequest = new com.bank.model.JwtRequest();
+		jwtRequest.setUsername("admin1");
+		jwtRequest.setPassword("admin1");
+		String inputJson = super.mapToJson(jwtRequest);
+		MvcResult mvcResult = mvc
+				.perform(
+						MockMvcRequestBuilders.post("/authenticate").contentType("application/json").content(inputJson))
+				.andReturn();
+
+		int status = mvcResult.getResponse().getStatus();
+		assertEquals(401, status);
+	}
+
+	@Test
+	public void InvalidAccounTid() throws Exception {
+
+		JwtRequest jwtRequest = new com.bank.model.JwtRequest();
+		jwtRequest.setUsername("user");
+		jwtRequest.setPassword("user");
+		String inputJson = super.mapToJson(jwtRequest);
+		MvcResult mvcResult = mvc
+				.perform(
+						MockMvcRequestBuilders.post("/authenticate").contentType("application/json").content(inputJson))
+				.andReturn();
+
+		int status = mvcResult.getResponse().getStatus();
+		jwtToken = mvcResult.getResponse().getContentAsString();
+		JSONObject obj = new JSONObject(jwtToken);
+		assertEquals(200, status);
+
+		String inputJson1 = super.mapToJson(createInvalidDeatail());
+		MvcResult result = mvc
+				.perform(post("/Statement").header("Authorization", "Bearer " + obj.getString("token"))
+						.contentType("application/json").content(inputJson1))
+				.andExpect(MockMvcResultMatchers.content().string("Account does not exist")).andReturn();
+	}
+
+	@Test
+	public void onlyFromAmountRequest() throws Exception {
+
+		JwtRequest jwtRequest = new com.bank.model.JwtRequest();
+		jwtRequest.setUsername("user");
+		jwtRequest.setPassword("user");
+		String inputJson = super.mapToJson(jwtRequest);
+		MvcResult mvcResult = mvc
+				.perform(
+						MockMvcRequestBuilders.post("/authenticate").contentType("application/json").content(inputJson))
+				.andReturn();
+
+		int status = mvcResult.getResponse().getStatus();
+		jwtToken = mvcResult.getResponse().getContentAsString();
+		JSONObject obj = new JSONObject(jwtToken);
+		assertEquals(200, status);
+
+		String inputJson1 = super.mapToJson(createRequestWithFromAmountAndAccId());
+		MvcResult result = mvc
+				.perform(post("/Statement").header("Authorization", "Bearer " + obj.getString("token"))
+						.contentType("application/json").content(inputJson1))
+				.andExpect(MockMvcResultMatchers.content().string("From Amount and To Amount must provide at a time"))
+				.andReturn();
+	}
+
+	@Test
+	public void onlyFromDateRequest() throws Exception {
+
+		JwtRequest jwtRequest = new com.bank.model.JwtRequest();
+		jwtRequest.setUsername("user");
+		jwtRequest.setPassword("user");
+		String inputJson = super.mapToJson(jwtRequest);
+		MvcResult mvcResult = mvc
+				.perform(
+						MockMvcRequestBuilders.post("/authenticate").contentType("application/json").content(inputJson))
+				.andReturn();
+
+		int status = mvcResult.getResponse().getStatus();
+		jwtToken = mvcResult.getResponse().getContentAsString();
+		JSONObject obj = new JSONObject(jwtToken);
+		assertEquals(200, status);
+
+		String inputJson1 = super.mapToJson(createRequestWithFromDateAndAccId());
+		MvcResult result = mvc
+				.perform(post("/Statement").header("Authorization", "Bearer " + obj.getString("token"))
+						.contentType("application/json").content(inputJson1))
+				.andExpect(MockMvcResultMatchers.content().string("Two Dates must provide at a time"))
+				.andReturn();
+	}
+
 	public StatementRequest createRequestWithDateAndAccId() throws ParseException {
 		StatementRequest statement = new StatementRequest();
 		statement.setAccNumber("0012250016005");
@@ -172,10 +262,31 @@ public class BankStatementControllerTest extends AbstractTest {
 		return statement;
 	}
 
+	public StatementRequest createRequestWithFromDateAndAccId() throws ParseException {
+		StatementRequest statement = new StatementRequest();
+		statement.setAccNumber("0012250016005");
+		statement.setFromDate(parseStringToDate("2020-10-01"));
+		return statement;
+	}
+
 	public StatementRequest createRequestWithOnlyAccId() throws ParseException {
 		StatementRequest statement = new StatementRequest();
 		statement.setAccNumber("0012250016005");
 
+		return statement;
+	}
+
+	public StatementRequest createInvalidDeatail() throws ParseException {
+		StatementRequest statement = new StatementRequest();
+		statement.setAccNumber("001225dsg0016005");
+
+		return statement;
+	}
+
+	public StatementRequest createRequestWithFromAmountAndAccId() throws ParseException {
+		StatementRequest statement = new StatementRequest();
+		statement.setAccNumber("0012250016005");
+		statement.setFromAmount(new BigDecimal(75));
 		return statement;
 	}
 
