@@ -35,11 +35,4 @@ public abstract class AbstractTest {
 		return objectMapper.writeValueAsString(obj);
 	}
 
-	protected <T> T mapFromJson(String json, Class<T> clazz)
-			throws JsonParseException, JsonMappingException, IOException {
-
-		ObjectMapper objectMapper = new ObjectMapper();
-		return objectMapper.readValue(json, clazz);
-	}
-
 }

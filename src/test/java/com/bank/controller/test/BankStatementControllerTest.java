@@ -140,11 +140,42 @@ public class BankStatementControllerTest extends AbstractTest {
 				.andExpect(MockMvcResultMatchers.status().isOk()).andReturn();
 	}
 
+	@Test
+	public void getStatementsUsingWithAccIdByUser() throws Exception {
+
+		JwtRequest jwtRequest = new com.bank.model.JwtRequest();
+		jwtRequest.setUsername("user");
+		jwtRequest.setPassword("user");
+		String inputJson = super.mapToJson(jwtRequest);
+		MvcResult mvcResult = mvc
+				.perform(
+						MockMvcRequestBuilders.post("/authenticate").contentType("application/json").content(inputJson))
+				.andReturn();
+
+		int status = mvcResult.getResponse().getStatus();
+		jwtToken = mvcResult.getResponse().getContentAsString();
+		JSONObject obj = new JSONObject(jwtToken);
+		assertEquals(200, status);
+
+		String inputJson1 = super.mapToJson(createRequestWithOnlyAccId());
+		MvcResult result = mvc
+				.perform(post("/Statement").header("Authorization", "Bearer " + obj.getString("token"))
+						.contentType("application/json").content(inputJson1))
+				.andExpect(MockMvcResultMatchers.status().isOk()).andReturn();
+	}
+
 	public StatementRequest createRequestWithDateAndAccId() throws ParseException {
 		StatementRequest statement = new StatementRequest();
 		statement.setAccNumber("0012250016005");
 		statement.setFromDate(parseStringToDate("2020-10-01"));
 		statement.setToDate(parseStringToDate("2021-01-09"));
+		return statement;
+	}
+
+	public StatementRequest createRequestWithOnlyAccId() throws ParseException {
+		StatementRequest statement = new StatementRequest();
+		statement.setAccNumber("0012250016005");
+
 		return statement;
 	}
 
@@ -165,7 +196,6 @@ public class BankStatementControllerTest extends AbstractTest {
 		statement.setToDate(parseStringToDate("2021-01-09"));
 		return statement;
 	}
-
 
 	public Date parseStringToDate(String stringDate) throws ParseException {
 
